@@ -1,8 +1,7 @@
 package net.botwithus.kxapi.permissive
 
-import kotlin.reflect.KClass
-
-interface StateEnum {
-    val description: String
-    val classz: KClass<out PermissiveDSL<*>>
-}
+/**
+ * Basic interface for state enums used in automatic state machine functionality.
+ * This provides only the description without requiring class information for instantiation.
+ */
+interface StateEnum : BaseStateEnum
