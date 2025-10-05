@@ -38,7 +38,7 @@ class NormalProduction : TypedProductionBuilder<NormalProduction>() {
     fun category(name: String) = apply { this._category = name }
 
     /**
-     * Build the ProductionManager for normal production.
+     * Build the ProductionTypeSelector for normal production.
      */
     override fun build(script: BwuScript): ProductionManager {
         check(::_itemName.isInitialized) { "itemName must be set before building" }
@@ -47,4 +47,3 @@ class NormalProduction : TypedProductionBuilder<NormalProduction>() {
         return ProductionManager(script, interfaceHandler)
     }
 }
-
