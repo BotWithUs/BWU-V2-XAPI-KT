@@ -18,7 +18,6 @@ abstract class PermissiveScript<State>(debug: Boolean) : BwuScript() where State
 
     init {
         isDebugMode = debug
-        logger.debug("{} debug mode set to {}", javaClass.simpleName, debug)
     }
 
     private val stateInstances = mutableMapOf<State, PermissiveDSL<*>>()
@@ -29,30 +28,13 @@ abstract class PermissiveScript<State>(debug: Boolean) : BwuScript() where State
      * @return The state instance
      */
     protected fun getState(stateEnum: State): PermissiveDSL<*>? {
-        stateInstances[stateEnum]?.let {
-            logger.debug("{} reusing state {}", javaClass.simpleName, stateEnum.description)
-            return it
-        }
+        return stateInstances.getOrPut(stateEnum) {
+            val stateClass = stateEnum.classz
 
-        val stateClass = stateEnum.classz
-        val instance = runCatching {
-            val constructor = stateClass.java.getDeclaredConstructor(this::class.java, String::class.java)
-            constructor.isAccessible = true
-            constructor.newInstance(this, stateEnum.description)
-        }.onFailure { error ->
-            logger.error("Failed to create state {} for {}", stateEnum.name, javaClass.simpleName, error)
-        }.getOrNull()
-
-        if (instance != null) {
-            stateInstances[stateEnum] = instance
-            logger.debug(
-                "{} instantiated state {} ({})",
-                javaClass.simpleName,
-                stateEnum.description,
-                stateClass.qualifiedName
-            )
+            stateClass.java.getDeclaredConstructor(this::class.java, String::class.java)
+                .newInstance(this, stateEnum.description)
+                ?: throw IllegalStateException("Could not create instance of $stateClass. Make sure the constructor takes (script: BwuScript, name: String)")
         }
-        return instance
     }
 
     abstract fun init()
@@ -62,12 +44,11 @@ abstract class PermissiveScript<State>(debug: Boolean) : BwuScript() where State
      * @param stateEnum The state to switch to
      */
     fun switchToState(stateEnum: State) {
-        getState(stateEnum)?.let {
+        getState(stateEnum)?.let { stateInstance ->
             setCurrentState(stateEnum.description)
             status = "Switched to ${stateEnum.description}"
-            logger.debug("{} switched to state {}", javaClass.simpleName, stateEnum.description)
         } ?: run {
-            logger.error("State {} not found or could not be created on {}", stateEnum.name, javaClass.simpleName)
+            logger.error("State $stateEnum not found or could not be created")
         }
     }
     
@@ -91,7 +72,6 @@ abstract class PermissiveScript<State>(debug: Boolean) : BwuScript() where State
 
     override fun onInitialize() {
         super.onInitialize()
-        logger.debug("{} initializing", javaClass.simpleName)
         runCatching {
             init()
 
@@ -100,21 +80,16 @@ abstract class PermissiveScript<State>(debug: Boolean) : BwuScript() where State
                 ?.actualTypeArguments
                 ?.firstOrNull()
                 ?.let { it as? Class<*> }
-
-            val resolvedStates = enumClass?.enumConstants?.mapNotNull { enumConstant ->
+            
+            val stateInstances = enumClass?.enumConstants?.mapNotNull { enumConstant ->
                 getState(enumConstant as State)
             }?.toTypedArray() ?: emptyArray()
-
+            
             // Call initStates with all state instances
-            initStates(*resolvedStates)
+            initStates(*stateInstances)
             status  = "Script initialized with state: ${currentState.name}"
-            if (resolvedStates.isEmpty()) {
-                logger.warn("{} initialized without any resolvable states", javaClass.simpleName)
-            } else {
-                logger.debug("{} initialised with {} state(s); active={}", javaClass.simpleName, resolvedStates.size, currentState.name)
-            }
         }.onFailure { e ->
-            logger.error("Failed to initialize {}: {}", javaClass.simpleName, e.message ?: "unknown error", e)
+            logger.error(e.message, e)
         }
     }
 
