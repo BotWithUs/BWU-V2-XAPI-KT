@@ -30,7 +30,7 @@ tasks.jar {
 repositories {
     mavenLocal()
     mavenCentral()
-    maven("https://nexus.botwithus.net/repository/maven-snapshots/")
+    maven("https://botwithus.github.io/maven")
 }
 
 dependencies {

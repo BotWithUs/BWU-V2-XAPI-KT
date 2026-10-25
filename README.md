@@ -19,11 +19,11 @@ Add the following to your `pom.xml`:
 <repositories>
     <repository>
         <id>botwithus-snapshots</id>
-        <url>https://nexus.botwithus.net/repository/maven-snapshots/</url>
+        <url>https://botwithus.github.io/maven</url>
     </repository>
     <repository>
         <id>botwithus-releases</id>
-        <url>https://nexus.botwithus.net/repository/maven-releases/</url>
+        <url>https://botwithus.github.io/maven</url>
     </repository>
 </repositories>
 
@@ -45,8 +45,8 @@ Add the following to your `build.gradle.kts`:
 
 ```kotlin
 repositories {
-    maven("https://nexus.botwithus.net/repository/maven-snapshots/")
-    maven("https://nexus.botwithus.net/repository/maven-releases/")
+    maven("https://botwithus.github.io/maven")
+    maven("https://botwithus.github.io/maven")
 }
 
 dependencies {
